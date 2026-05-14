@@ -11,8 +11,9 @@ import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
-public interface MemberRepository extends JpaRepository<Member, Long> {
+public interface MemberRepository extends JpaRepository<Member, Long>, MemberQueryRepository, JpaSpecificationExecutor<Member> {
 
 //    @Query(name = "Member.findByUsername")
     List<Member> findByUsername(@Param("username") String username);
@@ -64,4 +65,16 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     @Lock(LockModeType.PESSIMISTIC_READ)
     List<Member> findLockByUsername(@Param("username") String username);
+
+    List<UsernameOnly> findProjectionsByUsername(@Param("username") String username);
+
+    <T> List<T> findProjectionsClassByUsername(@Param("username") String username, Class<T> clazz);
+
+    @Query(value = "SELECT * FROM Member WHERE username = ?", nativeQuery = true)
+    Optional<Member> findNativeQuery(String username);
+
+    @Query(value = "SELECT m.member_id as id, m.username, t.name as teamName FROM MEMBER m LEFT JOIN TEAM t ON m.team_id = t.team_id",
+            nativeQuery = true,
+    countQuery = "SELECT COUNT(*) FROM MEMBER")
+    Page<MemberProjection> findNativeProjection(Pageable pageable);
 }
